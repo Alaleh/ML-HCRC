@@ -1,0 +1,10 @@
+cloudpickle==1.6.0
+joblib==1.0.1
+numpy==1.19.5
+Platypus-Opt==1.0.4
+pygmo==2.16.1
+scikit-learn==0.24.2
+scipy==1.5.4
+six==1.16.0
+sklearn==0.0
+threadpoolctl==2.2.0
