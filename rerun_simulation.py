@@ -83,7 +83,7 @@ def re_evaluations(x1):
 
     paths = '.'
 
-    with open(os.path.join(paths, 'results/Simulator_output.txt'), "a") as filehandle:
+    with open(os.path.join(paths, 'plotter/results/Simulator_output.txt'), "a") as filehandle:
         filehandle.write(' , '.join(parsing_line))
         filehandle.write('\n')
     filehandle.close()
@@ -127,16 +127,15 @@ def re_evaluations(x1):
         stability = -1
     else:
         stability = re_check_stable(eas, vcs, V_out)
-    print("is_stable: ", stability)
+
+        if stability<0 and eas[519] <= eas[518] <=  eas[517] <= eas[516] <= eas[515] <= eas[514] <= eas[513] <= eas[512] <= eas[511] <= eas[510] <= eas[509] or eas[519] >= eas[518] >=  eas[517] >= eas[516] >= eas[515] >= eas[514] >= eas[513] >= eas[512] >= eas[511] >= eas[510] >= eas[509] :
+            if ripple < 0.3 and V_out > 0.3 and 100.0>efficiency>=70.0:
+                if abs(eas[519]-eas[509])<=abs(eas[419]-eas[409])<=abs(eas[319]-eas[309])<=abs(eas[219]-eas[209]):
+                    stability = 520
 
     if stability >= 0:
         transient_settling_time = 3.0 * (stability + 1) * x[30] * 1e-9
         stability = 1
-
-    elif stability<0 and eas[519] <= eas[518] <=  eas[517] <= eas[516] <= eas[515] <= eas[514] <= eas[513] <= eas[512] <= eas[511] <= eas[510] <= eas[509] or eas[519] >= eas[518] >=  eas[517] >= eas[516] >= eas[515] >= eas[514] >= eas[513] >= eas[512] >= eas[511] >= eas[510] >= eas[509] :
-        if ripple < 0.3 and V_out > 0.3 and 100.0>efficiency>=70.0:
-            if abs(eas[519]-eas[509])<=abs(eas[419]-eas[409])<=abs(eas[319]-eas[309])<=abs(eas[219]-eas[209]):
-                stability = 520
 
     V_ref = x[31]
 

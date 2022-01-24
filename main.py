@@ -1,10 +1,9 @@
 import os
 import time
-from shutil import copy, copyfile
+from shutil import copy
 import numpy as np
 from model import GaussianProcess
 from singlemes import MaxvalueEntropySearch
-from scipy.optimize import minimize as scipyminimize
 from platypus import NSGAII, Problem, Real
 import simulation_launch
 
@@ -63,17 +62,17 @@ if __name__ == "__main__":
         if constraint_vals[0]>0 and min(constraint_vals[1:])>=0:
             valid_points.append(function_vals)
 
-        with open(os.path.join(paths, 'results/Inputs.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'plotter/results/Inputs.txt'), "a") as filehandle:
             for item in x_new:
                 filehandle.write('%f ' % item)
             filehandle.write('\n')
         filehandle.close()
-        with open(os.path.join(paths, 'results/Original_Inputs.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'plotter/results/Original_Inputs.txt'), "a") as filehandle:
             for item in original_x:
                 filehandle.write('%f ' % item)
             filehandle.write('\n')
         filehandle.close()
-        with open(os.path.join(paths, 'results/Outputs.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'plotter/results/Outputs.txt'), "a") as filehandle:
             vals = [x for x in function_vals]
             for x in constraint_vals:
                 vals.append(x)
@@ -176,19 +175,19 @@ if __name__ == "__main__":
         if constraint_vals[0]>0 and min(constraint_vals[1:])>=0:
             valid_points.append(function_vals)
 
-        with open(os.path.join(paths, 'results/Inputs.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'plotter/results/Inputs.txt'), "a") as filehandle:
             for item in x_best:
                 filehandle.write('%f ' % item)
             filehandle.write('\n')
         filehandle.close()
 
-        with open(os.path.join(paths, 'results/Original_Inputs.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'plotter/results/Original_Inputs.txt'), "a") as filehandle:
             for item in original_x:
                 filehandle.write('%f ' % item)
             filehandle.write('\n')
         filehandle.close()
 
-        with open(os.path.join(paths, 'results/Outputs.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'plotter/results/Outputs.txt'), "a") as filehandle:
             vals = [x for x in function_vals]
             for x in constraint_vals:
                 vals.append(x)

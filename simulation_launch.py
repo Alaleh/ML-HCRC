@@ -11,7 +11,7 @@ import rerun_simulation
 def evaluations(x1, iteration_cnt):
     x = deepcopy(x1)
 
-    # x[:12] = np.round(list(10 + np.asarray(x[:12]) * (100 - 10) // 10.0 * 10.0))  # these are f and m
+    # x[:12] = np.round(list(10 + np.asarray(x[:12]) * (100 - 10) // 10.0 * 10.0))
 
     for i in range(12):
         if x[i] > 0.66:
@@ -105,11 +105,12 @@ def evaluations(x1, iteration_cnt):
     os.remove("hcrtestresult.txt")
     print("number of returned values: ", len(functions_values))
 
-    efficiency, V_out, ripple, Imin = functions_values[0], functions_values[1], functions_values[2], functions_values[-1]
+    efficiency, V_out, ripple, Imin = functions_values[0], functions_values[1], functions_values[2], functions_values[
+        -1]
 
-    FoM = (x[24] + x[25] + x[26] + x[27]) / (V_out*1000.0)
+    FoM = (x[24] + x[25] + x[26] + x[27]) / (V_out * 1000.0)
 
-    transient_settling_time = 3.0 * 2000.0 * 3000.0 * 1e-9 # high value when infeasible
+    transient_settling_time = 3.0 * 2000.0 * 3000.0 * 1e-9  # high value when infeasible
 
     vc_ea_cnt = (len(functions_values) - 4) // 2
     vcs = functions_values[3:3 + vc_ea_cnt]
@@ -140,21 +141,26 @@ def evaluations(x1, iteration_cnt):
     constraints = [Imin, vo_verf_pos_cond, vo_vref_neg_cond, stability]
     print("Vo: ", V_out, "Vref", V_ref)
 
-    print("5 -|Output voltage - reference voltage|, -Output ripple, Efficiency: (0-100), -Transient settling time, -FoM: ",
-          objectives)  # minimizing all of these
+    print(
+        "5 -|Output voltage - reference voltage|, -Output ripple, Efficiency: (0-100), -Transient settling time, -FoM: ",
+        objectives)  # minimizing all of these
     print("Imin, 10 - (output voltage - reference voltage), 50 - (reference voltage - output voltage) , stability : ",
           constraints)  # >=0 and >0
 
-    if stability == -1 and ripple < 0.3 and V_out > 0.3 and 100.0>=efficiency>=70.0 and (eas[129] <= eas[128] <=  eas[127] <= eas[126] <= eas[125] <= eas[124] <= eas[123] <= eas[122] <= eas[121] <= eas[120] <= eas[119] or eas[129] >= eas[128] >=  eas[127] >= eas[126] >= eas[125] >= eas[124] >= eas[123] >= eas[122] >= eas[121] >= eas[120] >= eas[119]):
-            copy("hcr_test.ocn", "ocns")
-            os.rename("ocns/hcr_test.ocn", "ocns/hcr_test" + "_" + str(iteration_cnt+1) + "pre_run.ocn")
-            with open(os.path.join(paths, "results/simulation_res_hcr_test" + "_" + str(iteration_cnt+1) + "pre_run.txt"), "a") as filehandle:
-                filehandle.write(' , '.join(parsing_line))
-                filehandle.write('\n')
-            filehandle.close()
-            x, objectives, constraints = rerun_simulation.re_evaluations(x1)
+    if stability == -1 and ripple < 0.3 and V_out > 0.3 and 100.0 >= efficiency >= 70.0 and (
+            eas[129] <= eas[128] <= eas[127] <= eas[126] <= eas[125] <= eas[124] <= eas[123] <= eas[122] <= eas[121] <=
+            eas[120] <= eas[119] or eas[129] >= eas[128] >= eas[127] >= eas[126] >= eas[125] >= eas[124] >= eas[123] >=
+            eas[122] >= eas[121] >= eas[120] >= eas[119]):
+        copy("hcr_test.ocn", "ocns")
+        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test" + "_" + str(iteration_cnt + 1) + "pre_run.ocn")
+        with open(os.path.join(paths, "results/simulation_res_hcr_test" + "_" + str(iteration_cnt + 1) + "pre_run.txt"),
+                  "a") as filehandle:
+            filehandle.write(' , '.join(parsing_line))
+            filehandle.write('\n')
+        filehandle.close()
+        x, objectives, constraints = rerun_simulation.re_evaluations(x1)
     else:
-        with open(os.path.join(paths, 'results/Simulator_output.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'plotter/results/Simulator_output.txt'), "a") as filehandle:
             filehandle.write(' , '.join(parsing_line))
             filehandle.write('\n')
         filehandle.close()
@@ -170,7 +176,7 @@ def write_test_file(x):
     cpo = x[29]
     ramp = x[30]
     vref = x[31]
-    replacer = str(np.round(0.0004 + 390 * (ramp * 1e-9),12))
+    replacer = str(np.round(0.0004 + 390 * (ramp * 1e-9), 12))
     file_in = "hcr_test.ocn"
     file_out = "tmp.ocn"
     vc_changed_line_flag = True
