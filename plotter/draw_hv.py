@@ -32,23 +32,21 @@ markers = ["+", "*", "x", "v", ".", "^", "-"]
 
 # Scaled and unscaled are used for normalized hypervolumes
 
-for scale in ["unscaled"]:  # you can also add "zoomed", "scaled", , "unscaled"
+plt.grid(visible=True, linestyle='--')
+fig1 = plt.figure(1)
+plt.xlim(1, max_iters + 1)
+plt.ylim(14,16.5)
 
-    plt.grid(visible=True, linestyle='--')
-    fig1 = plt.figure(1)
-    plt.xlim(1, max_iters + 1)
-    plt.ylim(22,30)
+for i in range(len(All_phv_algo)):
+    plt.plot(range(len(All_phv_algo[i])), All_phv_algo[i], label=leg[i], linewidth=1.5, color=color[i],
+             marker=markers[i], markevery=10)
 
-    for i in range(len(All_phv_algo)):
-        plt.plot(range(len(All_phv_algo[i])), All_phv_algo[i], label=leg[i], linewidth=1.5, color=color[i],
-                 marker=markers[i], markevery=10)
+plt.legend(loc='lower right', prop={'size': 6})  # bbox_to_anchor=(1.01, 1),
 
-    plt.legend(loc='lower right', prop={'size': 6})  # bbox_to_anchor=(1.01, 1),
+plt.title(" Hypervolumes Plot")
+plt.xlabel('Number of feasible simulations (t)', fontsize=15)
+plt.ylabel('Hypervolume Indicator', fontsize=15)
+plt.show()
+fig1.savefig('../plotter/plots/hv_plot.png')
 
-    plt.title(" Hypervolumes Plot")
-    plt.xlabel('Number of feasible simulations (t)', fontsize=15)
-    plt.ylabel('Hypervolume Indicator', fontsize=15)
-    plt.show()
-    fig1.savefig('../plotter/plots/hv_plot.png')
-
-    plt.close()
+plt.close()
