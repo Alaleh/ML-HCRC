@@ -12,6 +12,7 @@ const_tries = []
 
 def sim(x):
     global itr_counter
+    print(itr_counter)
     original_x, functions, constraints, = baseline_simulation_launch.evaluations(x, itr_counter)
     x_tries.append(original_x)
     y_tries.append(functions)
@@ -26,14 +27,13 @@ if __name__ == "__main__":
 
     paths = '.'
 
-    M = 5  # objectives
-    C = 4  # Constraints
+    M = 2  # objectives
+    C = 6  # Constraints
     d = 32  # input dimensions
     seed = 1
 
     np.random.seed(seed)
-    total_iterations = 800
-    sample_number = 1
+    total_iterations = 1500
     bound = [0, 1]
     Fun_bounds = [bound] * d
     front = []
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     # f = open(filename, "r")
     # f1 = f.readlines()
     # orig_inputs = [x.split() for x in f1]
-    f.close()
+    # f.close()
 
     vars = []
     objs = []
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     #     print(i)
 
     problem.types[:] = Real(bound[0], bound[1])
-    problem.constraints[:] = [">0", ">=0", ">=0", ">=0"]
+    problem.constraints[:] = [">0", ">=0", ">=0", ">=0", ">=0", ">=0"]
     problem.function = sim
     algorithm = MOEAD(problem, population_size=len(init_pop), generator=InjectedPopulation(init_pop))
     algo_name = 'MOEAD'

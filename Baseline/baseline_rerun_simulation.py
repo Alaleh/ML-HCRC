@@ -9,6 +9,9 @@ from copy import deepcopy
 def re_evaluations(x1):
     x = deepcopy(x1)
 
+    M = 2
+    C = 6
+
     for i in range(12):
         if x[i] > 0.66:
             x[i] = 25.0
@@ -25,7 +28,11 @@ def re_evaluations(x1):
     for i in range(24, 28):
         t = x[i] * (22.0 - 4.5) + 4.5
         for j in range(1, len(C_values)):
-            if C_values[j - 1] <= t <= C_values[j]:
+            if C_values[j-1] == t:
+                x[i] = C_values[j - 1]
+            if C_values[j] == t:
+                x[i] = C_values[j]
+            if C_values[j - 1] < t < C_values[j]:
                 if t - C_values[j - 1] > C_values[j] - t:
                     x[i] = C_values[j]
                 else:
@@ -37,14 +44,18 @@ def re_evaluations(x1):
 
     t = x[28] * (4.7 - .220) + .220
     for j in range(1, len(l_values)):
-        if l_values[j - 1] <= t < l_values[j]:
+        if l_values[j-1] == t:
+            x[28] = l_values[j - 1]
+        if l_values[j] == t:
+            x[28] = l_values[j]
+        if l_values[j - 1] < t < l_values[j]:
             if t - l_values[j - 1] > l_values[j] - t:
                 x[28] = l_values[j]
             else:
                 x[28] = l_values[j - 1]
 
     # cpo
-    x[29] = np.round(500 + np.asarray(x[29]) * (4000 - 500)) // 100.0 * 100.0
+    x[29] = np.round(200 + np.asarray(x[29]) * (6000 - 200)) // 100.0 * 100.0
     # ramp
     x[30] = np.round(200 + np.asarray(x[30]) * (3000 - 200)) // 20.0 * 20.0
     # vref
@@ -58,6 +69,7 @@ def re_evaluations(x1):
     print("l, cpo, ramp, vref:", x[28:])
 
     re_write_test_file(x)
+
     print("Starting the simulation")
     start_time = time.time()
     os.system('sh run_code')
@@ -108,11 +120,10 @@ def re_evaluations(x1):
     os.remove("hcrtestresult.txt")
     print("number of returned values: ", len(functions_values))
 
-    efficiency, V_out, ripple, Imin = functions_values[0], functions_values[1], functions_values[2], functions_values[-1]
+    efficiency, V_out, ripple, Imin = functions_values[0], functions_values[1], functions_values[2], functions_values[
+        -1]
 
-    FoM = (x[24] + x[25] + x[26] + x[27]) / (V_out*1000.0)
-
-    transient_settling_time = 3.0 * 2000 * 3000 * 1e-9 # high value when infeasible
+    transient_settling_time = 3.0 * 2000 * 3000 * 1e-9  # high value when infeasible
 
     vc_ea_cnt = (len(functions_values) - 4) // 2
     vcs = functions_values[3:3 + vc_ea_cnt]
@@ -128,12 +139,13 @@ def re_evaluations(x1):
     else:
         stability = re_check_stable(eas, vcs, V_out)
 
-        if stability<0 and eas[519] <= eas[518] <=  eas[517] <= eas[516] <= eas[515] <= eas[514] <= eas[513] <= eas[512] <= eas[511] <= eas[510] <= eas[509] or eas[519] >= eas[518] >=  eas[517] >= eas[516] >= eas[515] >= eas[514] >= eas[513] >= eas[512] >= eas[511] >= eas[510] >= eas[509] :
-            if ripple < 0.3 and V_out > 0.3 and 100.0>efficiency>=70.0:
-                if abs(eas[519]-eas[509])<=abs(eas[419]-eas[409])<=abs(eas[319]-eas[309])<=abs(eas[219]-eas[209]):
+        if stability < 0 and eas[519] <= eas[518] <= eas[517] <= eas[516] <= eas[515] <= eas[514] <= eas[513] <= eas[
+            512] <= eas[511] <= eas[510] <= eas[509] or eas[519] >= eas[518] >= eas[517] >= eas[516] >= eas[515] >= eas[
+            514] >= eas[513] >= eas[512] >= eas[511] >= eas[510] >= eas[509]:
+            if ripple < 0.3 and V_out > 0.3 and 100.0 > efficiency >= 70.0:
+                if abs(eas[519] - eas[509]) <= abs(eas[419] - eas[409]) <= abs(eas[319] - eas[309]) <= abs(
+                        eas[219] - eas[209]):
                     stability = 520
-
-    print("is_stable: ", stability)
 
     if stability >= 0:
         transient_settling_time = 3.0 * (stability + 1) * x[30] * 1e-9
@@ -143,15 +155,16 @@ def re_evaluations(x1):
 
     vo_verf_pos_cond = 10 - (V_out * 1000.0 - V_ref)
     vo_vref_neg_cond = 50 - (V_ref - V_out * 1000.0)
-    soft_const_vo_vref = 5 - abs(V_out * 1000.0 - V_ref)
+    eff_const = efficiency - 70
+    ripple_const = 0.1 - ripple
 
-    objectives = [soft_const_vo_vref, -ripple, efficiency, -transient_settling_time, -FoM]
-    constraints = [Imin, vo_verf_pos_cond, vo_vref_neg_cond, stability]
+    objectives = [efficiency, -transient_settling_time]
+    constraints = [Imin, eff_const, ripple_const, vo_verf_pos_cond, vo_vref_neg_cond, stability]
     print("Vo: ", V_out, "Vref", V_ref)
 
-    print("5 -|Output voltage - reference voltage|, -Output ripple, Efficiency: (0-100), -Transient settling time, -FoM: ",
-          objectives)  # minimizing all of these
-    print("Imin, 10 - (output voltage - reference voltage), 50 - (reference voltage - output voltage) , stability : ",
+    print("Efficiency: (0-100), -Transient settling time: ", objectives)  # minimizing all of these
+    print("Imin, Efficiency - 70 , 0.1-ripple, 10 - (output voltage - reference voltage), 50 - (reference voltage - "
+          "output voltage) , stability : ",
           constraints)  # >=0 and >0
 
     return x, objectives, constraints
@@ -165,7 +178,7 @@ def re_write_test_file(x):
     cpo = x[29]
     ramp = x[30]
     vref = x[31]
-    replacer = str(np.round(0.0004 + 1560 * (ramp * 1e-9),12))
+    replacer = str(np.round(0.0004 + 1560 * (ramp * 1e-9), 15))
     file_in = "hcr_test.ocn"
     file_out = "tmp.ocn"
     vc_changed_line_flag = True

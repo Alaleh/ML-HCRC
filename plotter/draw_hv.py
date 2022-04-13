@@ -10,7 +10,7 @@ file_names = [x for x in ls if x.endswith('.txt')]
 print(file_names)
 
 All_phv_algo = []
-leg = [x[13:-4] for x in file_names]
+algs = [x[13:-4] for x in file_names]
 
 for file in file_names:
     print(file)
@@ -21,7 +21,7 @@ for file in file_names:
 
 print([len(i) for i in All_phv_algo])
 
-max_iters = 350 #max([len(j) for j in All_phv_algo])
+max_iters = max([len(j) for j in All_phv_algo])+5
 print(max_iters)
 
 plt.rcParams.update({'font.size': 10})
@@ -34,11 +34,11 @@ markers = ["+", "*", "x", "v", ".", "^", "-"]
 
 plt.grid(visible=True, linestyle='--')
 fig1 = plt.figure(1)
-plt.xlim(1, max_iters + 1)
-plt.ylim(14,16.5)
+plt.xlim(1, 400)
+# plt.ylim(0.0,1.01)
 
 for i in range(len(All_phv_algo)):
-    plt.plot(range(len(All_phv_algo[i])), All_phv_algo[i], label=leg[i], linewidth=1.5, color=color[i],
+    plt.plot(range(len(All_phv_algo[i])), All_phv_algo[i], label=algs[i], linewidth=1.5, color=color[i],
              marker=markers[i], markevery=10)
 
 plt.legend(loc='lower right', prop={'size': 6})  # bbox_to_anchor=(1.01, 1),

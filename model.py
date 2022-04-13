@@ -15,7 +15,7 @@ class GaussianProcess:
         self.xValues = []
         self.yValues = []
         self.yValuesNorm = []
-        self.model = GaussianProcessRegressor(kernel=self.kernel, n_restarts_optimizer=5, normalize_y=True,random_state=1)
+        self.model = GaussianProcessRegressor(kernel=self.kernel, n_restarts_optimizer=10, normalize_y=True,random_state=1)
 
     def fitNormal(self):
         y_mean = np.mean(self.yValues)

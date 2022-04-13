@@ -1,25 +1,29 @@
 import os
 import time
+import random
 from shutil import copy
 import numpy as np
 from model import GaussianProcess
+from scipy.optimize import minimize as scipyminimize
 from singlemes import MaxvalueEntropySearch
 from platypus import NSGAII, Problem, Real
 import simulation_launch
 
-#TODO: Try giving it the actual inputs not [0,1]
+# TODO: Try giving it the actual inputs not [0,1]
 
 if __name__ == "__main__":
 
     paths = '.'
 
-    M = 5  # objectives
-    C = 4  # Constraints
+    M = 2  # objectives
+    C = 6  # Constraints
     d = 32  # input dimensions
-    seed = 1
+    seed = 11
 
     np.random.seed(seed)
-    total_iterations = 900
+    random.seed(seed)
+
+    total_iterations = 2000
     sample_number = 1
     bound = [0, 1]
     Fun_bounds = [bound] * d
@@ -30,6 +34,26 @@ if __name__ == "__main__":
     front = []
     batch_len = 1
     valid_points = []
+    prev_dict = {}
+    all_inputs = []
+
+    filename1 = "prev_res/prev_Inputs.txt"
+    f_i = open(filename1, "r")
+    f_in = f_i.readlines()
+    f_i.close()
+    prev_ins = [[float(ss) for ss in z.split()] for z in f_in]
+
+    filename2 = "prev_res/prev_Outputs.txt"
+    f_o = open(filename2, "r")
+    f_out = f_o.readlines()
+    f_o.close()
+    prev_outs = [[float(ss) for ss in z.split()] for z in f_out]
+
+    filename3 = "prev_res/prev_01Inputs.txt"
+    f_n = open(filename3, "r")
+    f_norm = f_n.readlines()
+    f_n.close()
+    prev_inits = [[float(ss) for ss in z.split()] for z in f_norm]
 
     # For using initial.txt file:
     filename = "initial.txt"
@@ -43,36 +67,52 @@ if __name__ == "__main__":
         GPs.append(GaussianProcess(d))
     for i in range(C):
         GPs_C.append(GaussianProcess(d))
+    t = []
+
+    initial_number = len(prev_ins)
 
     for k in range(initial_number):
+        # # if random initial points:
         # exist = True
         # while exist:
         #     x_rand = list(np.random.uniform(low=bound[0], high=bound[1], size=(d,)))
         #     if not (any((x_rand == x).all() for x in GPs[0].xValues)):
         #         exist = False
-        x_new = [(float(p)) for p in inits[k]]
         # if any((x_rand == x).all() for x in GPs[0].xValues):
         #     print(k, " is duplicate")
         #     continue
-        original_x, function_vals, constraint_vals = simulation_launch.evaluations(x_new, k)
+
+        # if preset initial points:
+        # x_new = [(float(p)) for p in inits[k]]
+        # if x_new in all_inputs:
+        #     t.append(k)
+        # original_x, function_vals, constraint_vals = simulation_launch.evaluations(x_new, k)
+
+        # if precalculated initial points:
+
+        x_new = prev_inits[k]
+        original_x, function_vals, constraint_vals = prev_ins[k], prev_outs[k][:M], prev_outs[k][M:]
+
         for i in range(M):
             GPs[i].addSample(np.asarray(x_new), np.asarray(function_vals[i]))
         for i in range(C):
             GPs_C[i].addSample(np.asarray(x_new), np.asarray(constraint_vals[i]))
-        if constraint_vals[0]>0 and min(constraint_vals[1:])>=0:
+        if constraint_vals[0] > 0 and min(constraint_vals[1:]) >= 0:
             valid_points.append(function_vals)
 
-        with open(os.path.join(paths, 'plotter/results/Inputs.txt'), "a") as filehandle:
+        all_inputs.append(tuple(x_new))
+
+        with open(os.path.join(paths, 'results/Inputs.txt'), "a") as filehandle:
             for item in x_new:
                 filehandle.write('%f ' % item)
             filehandle.write('\n')
         filehandle.close()
-        with open(os.path.join(paths, 'plotter/results/Original_Inputs.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'results/Original_Inputs.txt'), "a") as filehandle:
             for item in original_x:
                 filehandle.write('%f ' % item)
             filehandle.write('\n')
         filehandle.close()
-        with open(os.path.join(paths, 'plotter/results/Outputs.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'results/Outputs.txt'), "a") as filehandle:
             vals = [x for x in function_vals]
             for x in constraint_vals:
                 vals.append(x)
@@ -82,7 +122,7 @@ if __name__ == "__main__":
         filehandle.close()
 
         copy("hcr_test.ocn", "ocns")
-        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test" + "_" + str(k+1) + ".ocn")
+        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test" + "_" + str(k + 1) + ".ocn")
 
     for i in range(M):
         GPs[i].fitModel()
@@ -91,9 +131,9 @@ if __name__ == "__main__":
         GPs_C[i].fitModel()
         Multiplemes_C.append(MaxvalueEntropySearch(GPs_C[i]))
 
-    for l in range(initial_number, total_iterations):
+    for iter_num in range(initial_number, total_iterations):
 
-        print(l)
+        print(iter_num)
 
         for i in range(M):
             Multiplemes[i] = MaxvalueEntropySearch(GPs[i])
@@ -112,15 +152,17 @@ if __name__ == "__main__":
             for i in range(C):
                 Multiplemes_C[i].weigh_sampling()
 
+
             def CMO(xi):
                 xi = np.asarray(xi)
                 y = [Multiplemes[i].f_regression(xi)[0][0] for i in range(len(GPs))]
                 y_c = [Multiplemes_C[i].f_regression(xi)[0][0] for i in range(len(GPs_C))]
                 return y, y_c
 
+
             problem = Problem(d, M, C)
             problem.types[:] = Real(bound[0], bound[1])
-            problem.constraints[:] = [">0", ">=0", ">=0", ">=0"]
+            problem.constraints[:] = [">0", ">=0", ">=0", ">=0", ">=0", ">=0"]
             problem.function = CMO
             algorithm = NSGAII(problem)
             t1 = time.time()
@@ -136,6 +178,7 @@ if __name__ == "__main__":
             max_samples.append(maxoffunctions)
             max_samples_constraints.append(maxofconstraints)
 
+
         # TODO add this to GP too -> No need now that we have stability constraint?
         def mesmo_acq(x):
             if np.prod([GPs_C[i].getmeanPrediction(x) >= 0 for i in range(len(GPs_C))]):
@@ -143,51 +186,67 @@ if __name__ == "__main__":
                 for j in range(sample_number):
                     multi_obj_acq_sample = 0
                     for i in range(M):
-                        multi_obj_acq_sample = multi_obj_acq_sample + Multiplemes[i].single_acq(np.asarray(x),max_samples[j][i])
+                        multi_obj_acq_sample = multi_obj_acq_sample + Multiplemes[i].single_acq(np.asarray(x),
+                                                                                                max_samples[j][i])
                     for i in range(C):
-                        multi_obj_acq_sample = multi_obj_acq_sample + Multiplemes_C[i].single_acq(np.asarray(x),max_samples_constraints[j][i])
+                        multi_obj_acq_sample = multi_obj_acq_sample + Multiplemes_C[i].single_acq(np.asarray(x),
+                                                                                                  max_samples_constraints[
+                                                                                                      j][i])
                     multi_obj_acq_total = multi_obj_acq_total + multi_obj_acq_sample
                 return (multi_obj_acq_total / sample_number)
             else:
                 return 10e10
 
+        # l-bfgs-b acquisation optimization
+        x_tries = np.random.uniform(bound[0], bound[1], size=(1000, d))
+        y_tries = [mesmo_acq(x) for x in x_tries]
+        sorted_indecies = np.argsort(y_tries)
+        i = 0
+        x_best = x_tries[sorted_indecies[i]]
 
-        x_tries = np.random.uniform(bound[0], bound[1],size=(1000, d))
-        y_tries=[mesmo_acq(x) for x in x_tries]
-        sorted_indecies=np.argsort(y_tries)
-        i=0
-        x_best=x_tries[sorted_indecies[i]]
-        while (any((x_best == x).all() for x in GPs[0].xValues)):
+        while tuple(x_best) in all_inputs:
+            print("repeated x")
             print(x_best)
             print(GPs[0].xValues)
-            i=i+1
-            x_best=x_tries[sorted_indecies[i]]
+            i = i + 1
+            x_best = x_tries[sorted_indecies[i]]
+
+        y_best = y_tries[sorted_indecies[i]]
+        x_seed = list(np.random.uniform(low=bound[0], high=bound[1], size=(100, d)))
+        for x_try in x_seed:
+            result = scipyminimize(mesmo_acq, x0=np.asarray(x_try).reshape(1, -1), method='L-BFGS-B', bounds=Fun_bounds)
+            if not result.success:
+                continue
+            if ((result.fun <= y_best) and (not (result.x in np.asarray(GPs[0].xValues)))):
+                y_best = result.fun
 
         # ---------------Updating and fitting the GPs-----------------
 
-        original_x, function_vals, constraint_vals = simulation_launch.evaluations(x_best,l)
+        original_x, function_vals, constraint_vals = simulation_launch.evaluations(x_best, iter_num)
         for i in range(M):
             GPs[i].addSample(np.asarray(x_best), function_vals[i])
             GPs[i].fitModel()
         for i in range(C):
             GPs_C[i].addSample(np.asarray(x_best), constraint_vals[i])
             GPs_C[i].fitModel()
-        if constraint_vals[0]>0 and min(constraint_vals[1:])>=0:
+        if constraint_vals[0] > 0 and min(constraint_vals[1:]) >= 0:
             valid_points.append(function_vals)
 
-        with open(os.path.join(paths, 'plotter/results/Inputs.txt'), "a") as filehandle:
+        all_inputs.append(tuple(x_best))
+
+        with open(os.path.join(paths, 'results/Inputs.txt'), "a") as filehandle:
             for item in x_best:
                 filehandle.write('%f ' % item)
             filehandle.write('\n')
         filehandle.close()
 
-        with open(os.path.join(paths, 'plotter/results/Original_Inputs.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'results/Original_Inputs.txt'), "a") as filehandle:
             for item in original_x:
                 filehandle.write('%f ' % item)
             filehandle.write('\n')
         filehandle.close()
 
-        with open(os.path.join(paths, 'plotter/results/Outputs.txt'), "a") as filehandle:
+        with open(os.path.join(paths, 'results/Outputs.txt'), "a") as filehandle:
             vals = [x for x in function_vals]
             for x in constraint_vals:
                 vals.append(x)
@@ -197,4 +256,4 @@ if __name__ == "__main__":
         filehandle.close()
 
         copy("hcr_test.ocn", "ocns")
-        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test" + "_" + str(l+1) + ".ocn")
+        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test" + "_" + str(iter_num + 1) + ".ocn")
