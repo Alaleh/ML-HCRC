@@ -178,7 +178,6 @@ if __name__ == "__main__":
             max_samples.append(maxoffunctions)
             max_samples_constraints.append(maxofconstraints)
 
-
         # TODO add this to GP too -> No need now that we have stability constraint?
         def mesmo_acq(x):
             if np.prod([GPs_C[i].getmeanPrediction(x) >= 0 for i in range(len(GPs_C))]):
@@ -193,9 +192,10 @@ if __name__ == "__main__":
                                                                                                   max_samples_constraints[
                                                                                                       j][i])
                     multi_obj_acq_total = multi_obj_acq_total + multi_obj_acq_sample
-                return (multi_obj_acq_total / sample_number)
+                return multi_obj_acq_total / sample_number
             else:
                 return 10e10
+
 
         # l-bfgs-b acquisation optimization
         x_tries = np.random.uniform(bound[0], bound[1], size=(1000, d))
@@ -217,7 +217,8 @@ if __name__ == "__main__":
             result = scipyminimize(mesmo_acq, x0=np.asarray(x_try).reshape(1, -1), method='L-BFGS-B', bounds=Fun_bounds)
             if not result.success:
                 continue
-            if ((result.fun <= y_best) and (not (result.x in np.asarray(GPs[0].xValues)))):
+            if (result.fun <= y_best) and (not (result.x in np.asarray(GPs[0].xValues))):
+                x_best = result.x
                 y_best = result.fun
 
         # ---------------Updating and fitting the GPs-----------------
