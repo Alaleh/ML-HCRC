@@ -1,4 +1,0 @@
-#!/bin/bash
-cd /net/g/zzhou/pub/Cadence/tsmc180
-source $ICTOOLS/net/g/zzhou/pub/Cadence/tsmc180/tsmc180.sh
-ocean -nograph -replay "/net/g/zzhou/pub/ML_HCR/hcr_test.ocn"

@@ -1,15 +1,12 @@
 import numpy as np
 import time
 import os
-import copy
 from copy import deepcopy
-import shutil
-import longest_simulation
+
 
 # 3**12 * 160**12 * 18**4 * 30 * 35 * 140 * 16 > 10**30
 
-def re_evaluations(x1, iteration_cnt):
-
+def re_re_re_evaluations(x1, iteration_cnt):
     x = deepcopy(x1)
 
     M = 2
@@ -98,7 +95,7 @@ def re_evaluations(x1, iteration_cnt):
 
     paths = '.'
 
-    with open(os.path.join(paths, 'results/Simulator_output_rerun.txt'), "a") as filehandle:
+    with open(os.path.join(paths, 'results/Simulator_output_longest.txt'), "a") as filehandle:
         filehandle.write(' , '.join(parsing_line))
         filehandle.write('\n')
     filehandle.close()
@@ -144,14 +141,6 @@ def re_evaluations(x1, iteration_cnt):
     else:
         stability = re_check_stable(eas, vcs, V_out)
 
-        if stability < 0 and eas[519] <= eas[518] <= eas[517] <= eas[516] <= eas[515] <= eas[514] <= eas[513] <= eas[
-            512] <= eas[511] <= eas[510] <= eas[509] or eas[519] >= eas[518] >= eas[517] >= eas[516] >= eas[515] >= eas[
-            514] >= eas[513] >= eas[512] >= eas[511] >= eas[510] >= eas[509]:
-            if ripple < 0.3 and V_out > 0.3 and 100.0 > efficiency >= 70.0:
-                if abs(eas[519] - eas[509]) <= abs(eas[419] - eas[409]) <= abs(eas[319] - eas[309]) <= abs(
-                        eas[219] - eas[209]):
-                    stability = 520
-
     if stability >= 0:
         transient_settling_time = 3.0 * (stability + 1) * x[30] * 1e-9
         stability = 1
@@ -173,17 +162,6 @@ def re_evaluations(x1, iteration_cnt):
         "Imin, Efficiency - 70 , 10 - (output voltage - reference voltage), 50 - (reference voltage - output voltage) , stability : ",
         constraints)  # >=0 and >0
 
-    if efficiency>90:
-        shutil.copy("hcr_test.ocn", "ocns")
-        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test_MESMOC_" + str(iteration_cnt + 1) + "_sim_rerun_over90_run.ocn")
-        with open(os.path.join(paths, "results/simulation_res_hcr_test_MESMOC_" + str(
-                iteration_cnt + 1) + "_sim_rerun_over90_run.ocn"),
-                  "a") as filehandle:
-            filehandle.write(' , '.join(parsing_line))
-            filehandle.write('\n')
-        filehandle.close()
-        x, objectives, constraints = longest_simulation.re_re_re_evaluations(x1, iteration_cnt)
-
     return x, objectives, constraints
 
 
@@ -195,8 +173,8 @@ def re_write_test_file(x):
     cpo = x[29]
     ramp = x[30]
     vref = x[31]
-    replacer = str(np.round(0.0004 + 1560 * (ramp * 1e-9), 18))
-    file_in = "hcr_test.ocn"
+    replacer = str(np.round(0.0004 + 1800 * (ramp * 1e-9), 15))
+    file_in = "../hcr_test.ocn"
     file_out = "tmp.ocn"
     vc_changed_line_flag = True
     ea_changed_line_flag = True
@@ -204,20 +182,20 @@ def re_write_test_file(x):
         with open(file_out, "wt") as fout:
             for line in fin:
                 if line.startswith("ocnPrint"):
-                    vcs_str = ' '.join("vc" + str(i) for i in range(1, 521))
-                    eas_str = ' '.join("ea" + str(i) for i in range(1, 521))
+                    vcs_str = ' '.join("vc" + str(i) for i in range(1, 1041))
+                    eas_str = ' '.join("ea" + str(i) for i in range(1, 1041))
                     fout.write("ocnPrint(?output port eff Vo ripple " + vcs_str + " " + eas_str + " Imin)\n")
                 elif line.startswith("ea"):
                     if ea_changed_line_flag:
                         ea_changed_line_flag = False
-                        for cnt in range(520):
+                        for cnt in range(1040):
                             fout.write("ea" + str(cnt + 1) + " = average(clipX(vtime('tran \"/ea\") (0.0004 + (" + str(
                                 3 * cnt) + " * VAR(\"ramp\"))) (0.0004 + (" + str(
                                 3 * (cnt + 1)) + " * VAR(\"ramp\")))))\n")
                 elif line.startswith("vc"):
                     if vc_changed_line_flag:
                         vc_changed_line_flag = False
-                        for cnt in range(520):
+                        for cnt in range(1040):
                             fout.write("vc" + str(cnt + 1) + " = average(clipX(vtime('tran \"/vo\") (0.0004 + (" + str(
                                 3 * (cnt)) + " * VAR(\"ramp\"))) (0.0004 + (" + str(
                                 3 * (cnt + 1)) + " * VAR(\"ramp\")))))\n")

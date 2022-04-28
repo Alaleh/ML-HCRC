@@ -1,20 +1,18 @@
-import numpy as np
-import time
 import os
+import time
+import numpy as np
+import shutil
+import rerun_simulation
+import longer_simulation
+import copy
 from copy import deepcopy
-from shutil import copy
+
 
 # 3**12 * 160**12 * 18**4 * 30 * 35 * 140 * 16 > 10**30
-import rerun_simulation
 
 
 def evaluations(x1, iteration_cnt):
     x = deepcopy(x1)
-
-    # x[:12] = np.round(list(10 + np.asarray(x[:12]) * (100 - 10) // 10.0 * 10.0))
-
-    M = 2
-    C = 6
 
     for i in range(12):
         if x[i] > 0.66:
@@ -32,7 +30,7 @@ def evaluations(x1, iteration_cnt):
     for i in range(24, 28):
         t = x[i] * (22.0 - 4.5) + 4.5
         for j in range(1, len(C_values)):
-            if C_values[j-1] == t:
+            if C_values[j - 1] == t:
                 x[i] = C_values[j - 1]
             if C_values[j] == t:
                 x[i] = C_values[j]
@@ -48,7 +46,7 @@ def evaluations(x1, iteration_cnt):
 
     t = x[28] * (4.7 - .220) + .220
     for j in range(1, len(l_values)):
-        if l_values[j-1] == t:
+        if l_values[j - 1] == t:
             x[28] = l_values[j - 1]
         if l_values[j] == t:
             x[28] = l_values[j]
@@ -79,7 +77,7 @@ def evaluations(x1, iteration_cnt):
     exists = False
     while not exists:
         print("wait for results file")
-        time.sleep(3)
+        time.sleep(5)
         exists = os.path.exists('hcrtestresult.txt')
 
     simulation_time = time.time() - start_time
@@ -93,10 +91,12 @@ def evaluations(x1, iteration_cnt):
     parsing_line = Full_string.split()
     functions_values = []
 
-    # print("output:", parsing_line)
-    # ocnPrint(?output port eff Vo ripple vc1 vc2 vc3 vc4 vc5 vc6 vc7 Imin)
-
     paths = '.'
+
+    with open(os.path.join(paths, 'results/Simulator_output_MESMOC.txt'), "a") as filehandle:
+        filehandle.write(' , '.join(parsing_line))
+        filehandle.write('\n')
+    filehandle.close()
 
     for i in range(len(parsing_line)):
         if 'm' in parsing_line[i]:
@@ -118,20 +118,18 @@ def evaluations(x1, iteration_cnt):
     os.remove("hcrtestresult.txt")
     print("number of returned values: ", len(functions_values))
 
-    efficiency, V_out, ripple, Imin = functions_values[0], functions_values[1], functions_values[2], functions_values[-1]
+    efficiency, V_out, ripple, Imin = functions_values[0], functions_values[1], functions_values[2], functions_values[
+        -1]
 
-    transient_settling_time = 3.0 * 5000.0 * 3000.0 * 1e-9  # high value when infeasible
+    transient_settling_time = 3.0 * 100000.0 * 3000.0 * 1e-9  # high value when infeasible
 
     vc_ea_cnt = (len(functions_values) - 4) // 2
     vcs = functions_values[3:3 + vc_ea_cnt]
     eas = functions_values[3 + vc_ea_cnt:-1]
 
     print("Efficiency: ", efficiency)
-    print("Output voltage: ", V_out)
-    print("ripple: ", ripple)
-    print("minimum inductor current: ", Imin)
 
-    if ripple >= 0.3 or V_out <= 0.3 or not 0 < efficiency <= 100:  # or functions_values[-1] <= 0:
+    if ripple >= 0.3 or V_out <= 0.3 or not 0 < efficiency <= 100:
         stability = -1
     else:
         stability = check_stable(eas, vcs, V_out)
@@ -143,37 +141,46 @@ def evaluations(x1, iteration_cnt):
         stability = 1
 
     V_ref = x[31]
-
+    FoM = (x[24] + x[25] + x[26] + x[27]) / (V_out * 1000.0)
     vo_verf_pos_cond = 10 - (V_out * 1000.0 - V_ref)
     vo_vref_neg_cond = 50 - (V_ref - V_out * 1000.0)
+    vo_vref_obj = 5 - abs(V_out*1000 - V_ref)
     eff_const = efficiency - 70
-    ripple_const = 0.1 - ripple
 
-    objectives = [efficiency, -transient_settling_time]
-    constraints = [Imin, eff_const, ripple_const, vo_verf_pos_cond, vo_vref_neg_cond, stability]
+    objectives = [efficiency, -transient_settling_time, -FoM, -ripple, vo_vref_obj]
+    constraints = [Imin, eff_const, vo_verf_pos_cond, vo_vref_neg_cond, stability]
     print("Vo: ", V_out, "Vref", V_ref)
 
-    print("Efficiency: (0-100), -Transient settling time: ", objectives)  # minimizing all of these
-    print("Imin, Efficiency - 70 , 0.1-ripple, 10 - (output voltage - reference voltage), 50 - (reference voltage - output voltage) , stability : ",
-          constraints)  # >=0 and >0
+    print("Efficiency: (0-100), -Transient settling time, -FoM, -ripple, 5 - |output voltage - reference voltage|: ",
+          objectives)
+    print(
+        "Imin, Efficiency - 70 , 10 - (output voltage - reference voltage), 50 - (reference voltage - output voltage) , stability : ",
+        constraints)  # >=0 and >0
 
-    if stability == -1 and ripple < 0.3 and V_out > 0.3 and efficiency >= 75.0 and (
+    if (stability == -1 and ripple < 0.3 and V_out > 0.3 and efficiency >= 75.0 and (
             eas[129] <= eas[128] <= eas[127] <= eas[126] <= eas[125] <= eas[124] <= eas[123] <= eas[122] <= eas[121] <=
             eas[120] <= eas[119] or eas[129] >= eas[128] >= eas[127] >= eas[126] >= eas[125] >= eas[124] >= eas[123] >=
-            eas[122] >= eas[121] >= eas[120] >= eas[119]):
-        copy("hcr_test.ocn", "ocns")
-        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test" + "_" + str(iteration_cnt + 1) + "pre_run.ocn")
-        with open(os.path.join(paths, "results/simulation_res_hcr_test" + "_" + str(iteration_cnt + 1) + "pre_run.txt"),
+            eas[122] >= eas[121] >= eas[120] >= eas[119])):
+        shutil.copy("hcr_test.ocn", "ocns")
+        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test_MESMOC_" + str(iteration_cnt + 1) + "_initial_unstable_run.ocn")
+        with open(os.path.join(paths, "results/simulation_res_hcr_test_MESMOC_" + str(
+                iteration_cnt + 1) + "_initial_unstable_run.txt"),
                   "a") as filehandle:
             filehandle.write(' , '.join(parsing_line))
             filehandle.write('\n')
         filehandle.close()
-        x, objectives, constraints = rerun_simulation.re_evaluations(x1)
-    else:
-        with open(os.path.join(paths, 'results/Simulator_output.txt'), "a") as filehandle:
+        x, objectives, constraints = rerun_simulation.re_evaluations(x1, iteration_cnt)
+
+    elif efficiency > 90.0:
+        shutil.copy("hcr_test.ocn", "ocns")
+        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test_MESMOC_" + str(iteration_cnt + 1) + "_sim_launch_over90_run.ocn")
+        with open(os.path.join(paths, "results/simulation_res_hcr_test_MESMOC_" + str(
+                iteration_cnt + 1) + "_sim_launch_over90_run.ocn"),
+                  "a") as filehandle:
             filehandle.write(' , '.join(parsing_line))
             filehandle.write('\n')
         filehandle.close()
+        x, objectives, constraints = longer_simulation.re_re_evaluations(x1, iteration_cnt)
 
     return x, objectives, constraints
 
@@ -186,7 +193,7 @@ def write_test_file(x):
     cpo = x[29]
     ramp = x[30]
     vref = x[31]
-    replacer = str(np.round(0.0004 + 900 * (ramp * 1e-9), 15))
+    replacer = str(np.round(0.0004 + 900 * (ramp * 1e-9), 18))
     file_in = "hcr_test.ocn"
     file_out = "tmp.ocn"
     vc_changed_line_flag = True
