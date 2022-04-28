@@ -6,9 +6,6 @@ from copy import deepcopy
 def re_re_re_evaluations(x1, iteration_cnt):
     x = deepcopy(x1)
 
-    M = 2
-    C = 6
-
     for i in range(12):
         if x[i] > 0.66:
             x[i] = 25.0

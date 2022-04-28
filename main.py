@@ -11,7 +11,7 @@ from platypus import NSGAII, Problem, Real, Subset
 import simulation_launch
 from transform import convert_to_original
 
-# You can't just add flags to discredit k=the good results
+# 1. We keep adding flags to discredit the good results
 # What if the bad results were better?
 
 
@@ -54,19 +54,19 @@ if __name__ == "__main__":
         GPs_C.append(GaussianProcess(d))
     t = []
 
-    filename1 = "prev_res/prev_Inputs.txt"
+    filename1 = "prev_res/Original_Inputs_MESMOC_prev.txt"
     f_i = open(filename1, "r")
     f_in = f_i.readlines()
     f_i.close()
     prev_ins = [[float(ss) for ss in z.split()] for z in f_in]
 
-    filename2 = "prev_res/prev_Outputs.txt"
+    filename2 = "prev_res/Outputs_MESMOC_prev.txt"
     f_o = open(filename2, "r")
     f_out = f_o.readlines()
     f_o.close()
     prev_outs = [[float(ss) for ss in z.split()] for z in f_out]
 
-    filename3 = "prev_res/prev_01Inputs.txt"
+    filename3 = "prev_res/Inputs_MESMOC_prev.txt"
     f_n = open(filename3, "r")
     f_norm = f_n.readlines()
     f_n.close()
@@ -107,6 +107,10 @@ if __name__ == "__main__":
                 filehandle.write('%f ' % listitem)
             filehandle.write('\n')
         filehandle.close()
+
+        # # If first time running:
+        # shutil.copy("hcr_test.ocn", "ocns")
+        # os.rename("ocns/hcr_test.ocn", "ocns/hcr_test_MESMOC_" + str(k + 1) + ".ocn")
 
 
     for i in range(M):

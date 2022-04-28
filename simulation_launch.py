@@ -157,7 +157,7 @@ def evaluations(x1, iteration_cnt):
         "Imin, Efficiency - 70 , 10 - (output voltage - reference voltage), 50 - (reference voltage - output voltage) , stability : ",
         constraints)  # >=0 and >0
 
-    if (stability == -1 and ripple < 0.3 and V_out > 0.3 and efficiency >= 75.0 and (
+    if (stability == -1 and ripple < 0.3 and V_out > 0.3 and efficiency >= 78.0 and (
             eas[129] <= eas[128] <= eas[127] <= eas[126] <= eas[125] <= eas[124] <= eas[123] <= eas[122] <= eas[121] <=
             eas[120] <= eas[119] or eas[129] >= eas[128] >= eas[127] >= eas[126] >= eas[125] >= eas[124] >= eas[123] >=
             eas[122] >= eas[121] >= eas[120] >= eas[119])):
@@ -171,11 +171,11 @@ def evaluations(x1, iteration_cnt):
         filehandle.close()
         x, objectives, constraints = rerun_simulation.re_evaluations(x1, iteration_cnt)
 
-    elif efficiency > 90.0:
+    elif 100 >= efficiency >= 90.0:
         shutil.copy("hcr_test.ocn", "ocns")
-        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test_MESMOC_" + str(iteration_cnt + 1) + "_sim_launch_over90_run.ocn")
+        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test_MESMOC_" + str(iteration_cnt + 1) + "_sim_launch_over90_run.txt")
         with open(os.path.join(paths, "results/simulation_res_hcr_test_MESMOC_" + str(
-                iteration_cnt + 1) + "_sim_launch_over90_run.ocn"),
+                iteration_cnt + 1) + "_sim_launch_over90_run.txt"),
                   "a") as filehandle:
             filehandle.write(' , '.join(parsing_line))
             filehandle.write('\n')

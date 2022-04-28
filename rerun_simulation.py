@@ -167,11 +167,11 @@ def re_evaluations(x1, iteration_cnt):
         "Imin, Efficiency - 70 , 10 - (output voltage - reference voltage), 50 - (reference voltage - output voltage) , stability : ",
         constraints)  # >=0 and >0
 
-    if efficiency>90:
+    if 100 >= efficiency >= 90:
         shutil.copy("hcr_test.ocn", "ocns")
-        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test_MESMOC_" + str(iteration_cnt + 1) + "_sim_rerun_over90_run.ocn")
+        os.rename("ocns/hcr_test.ocn", "ocns/hcr_test_MESMOC_" + str(iteration_cnt + 1) + "_sim_rerun_over90_run.txt")
         with open(os.path.join(paths, "results/simulation_res_hcr_test_MESMOC_" + str(
-                iteration_cnt + 1) + "_sim_rerun_over90_run.ocn"),
+                iteration_cnt + 1) + "_sim_rerun_over90_run.txt"),
                   "a") as filehandle:
             filehandle.write(' , '.join(parsing_line))
             filehandle.write('\n')
