@@ -12,9 +12,6 @@ def re_evaluations(x1, iteration_cnt):
 
     x = deepcopy(x1)
 
-    M = 2
-    C = 6
-
     for i in range(12):
         if x[i] > 0.66:
             x[i] = 25.0
@@ -93,9 +90,6 @@ def re_evaluations(x1, iteration_cnt):
     parsing_line = Full_string.split()
     functions_values = []
 
-    # print("output:", parsing_line)
-    # ocnPrint(?output port eff Vo ripple vc1 vc2 vc3 vc4 vc5 vc6 vc7 Imin)
-
     paths = '.'
 
     with open(os.path.join(paths, 'results/Simulator_output_rerun.txt'), "a") as filehandle:
@@ -128,7 +122,7 @@ def re_evaluations(x1, iteration_cnt):
 
     FoM = (x[24] + x[25] + x[26] + x[27]) / (V_out * 1000.0)
 
-    transient_settling_time = 3.0 * 2000 * 3000 * 1e-9  # high value when infeasible
+    transient_settling_time = 3.0 * 100000.0 * 3000 * 1e-9  # high value when infeasible
 
     vc_ea_cnt = (len(functions_values) - 4) // 2
     vcs = functions_values[3:3 + vc_ea_cnt]

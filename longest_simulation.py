@@ -3,9 +3,6 @@ import time
 import os
 from copy import deepcopy
 
-
-# 3**12 * 160**12 * 18**4 * 30 * 35 * 140 * 16 > 10**30
-
 def re_re_re_evaluations(x1, iteration_cnt):
     x = deepcopy(x1)
 
@@ -28,7 +25,7 @@ def re_re_re_evaluations(x1, iteration_cnt):
     for i in range(24, 28):
         t = x[i] * (22.0 - 4.5) + 4.5
         for j in range(1, len(C_values)):
-            if C_values[j-1] == t:
+            if C_values[j - 1] == t:
                 x[i] = C_values[j - 1]
             if C_values[j] == t:
                 x[i] = C_values[j]
@@ -44,7 +41,7 @@ def re_re_re_evaluations(x1, iteration_cnt):
 
     t = x[28] * (4.7 - .220) + .220
     for j in range(1, len(l_values)):
-        if l_values[j-1] == t:
+        if l_values[j - 1] == t:
             x[28] = l_values[j - 1]
         if l_values[j] == t:
             x[28] = l_values[j]
@@ -90,9 +87,6 @@ def re_re_re_evaluations(x1, iteration_cnt):
     parsing_line = Full_string.split()
     functions_values = []
 
-    # print("output:", parsing_line)
-    # ocnPrint(?output port eff Vo ripple vc1 vc2 vc3 vc4 vc5 vc6 vc7 Imin)
-
     paths = '.'
 
     with open(os.path.join(paths, 'results/Simulator_output_longest.txt'), "a") as filehandle:
@@ -125,7 +119,7 @@ def re_re_re_evaluations(x1, iteration_cnt):
 
     FoM = (x[24] + x[25] + x[26] + x[27]) / (V_out * 1000.0)
 
-    transient_settling_time = 3.0 * 2000 * 3000 * 1e-9  # high value when infeasible
+    transient_settling_time = 3.0 * 100000.0 * 3000 * 1e-9  # high value when infeasible
 
     vc_ea_cnt = (len(functions_values) - 4) // 2
     vcs = functions_values[3:3 + vc_ea_cnt]
@@ -149,7 +143,7 @@ def re_re_re_evaluations(x1, iteration_cnt):
     FoM = (x[24] + x[25] + x[26] + x[27]) / (V_out * 1000.0)
     vo_verf_pos_cond = 10 - (V_out * 1000.0 - V_ref)
     vo_vref_neg_cond = 50 - (V_ref - V_out * 1000.0)
-    vo_vref_obj = 5 - abs(V_out*1000 - V_ref)
+    vo_vref_obj = 5 - abs(V_out * 1000 - V_ref)
     eff_const = efficiency - 70
 
     objectives = [efficiency, -transient_settling_time, -FoM, -ripple, vo_vref_obj]
